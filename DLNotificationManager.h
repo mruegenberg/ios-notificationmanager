@@ -9,6 +9,13 @@
 #import <Foundation/Foundation.h>
 #import "DLLocalNotification.h"
 
+// an interval where no notifications should fire
+@interface DLNotificationBreakInterval : NSObject
+@property (readonly) NSDate *start;
+@property (readonly) NSDate *end;
++ (DLNotificationBreakInterval *)breakFrom:(NSDate *)s to:(NSDate *)e;
+@end
+
 @interface DLNotificationManager : NSObject
 
 + (DLNotificationManager *)sharedNotificationManager;
@@ -20,6 +27,11 @@
 
 - (void)schedulePendingNotifications; // updates the local notifications actually scheduled
 
-// TODO: support for periods without notifications (aka holidays)
+// TODO: support for periods without notifications (aka holidays):
+/*
+@property (nonatomic,readonly) NSSet *breaks; // contains `DLNotificationBreakInterval` objects
+- (void)addBreak:(DLNotificationBreakInterval *)breakI;
+- (void)removeBreak:(DLNotificationBreakInterval *)breakI; // removes the exact object.
+ */
 
 @end

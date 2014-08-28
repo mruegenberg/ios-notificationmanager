@@ -21,6 +21,21 @@ NSArray *scheduledNotifications() {
     return [[UIApplication sharedApplication] scheduledLocalNotifications];
 }
 
+/*
+@interface DLNotificationBreakInterval ()
+@property (readwrite) NSDate *start;
+@property (readwrite) NSDate *end;
+@end
+
+@implementation DLNotificationBreakInterval
++ (DLNotificationBreakInterval *)breakFrom:(NSDate *)s to:(NSDate *)e {
+    DLNotificationBreakInterval *breakI = [DLNotificationBreakInterval new];
+    breakI.start = s; breakI.end = e;
+    return breakI;
+}
+@end
+ */
+
 @interface DLNotificationManager ()
 
 @property NSMutableDictionary *notifications; // TODO: check whether using a dictionary here actually helps much. otherwise use an array
@@ -33,6 +48,9 @@ NSArray *scheduledNotifications() {
 @property BOOL shouldPersist;
 
 - (NSArray *)scheduledNotificationsForId:(NSUUID *)notifId;
+
+// TODO: use this when scheduling local notifications
+@property (strong) NSMutableSet *breakIntervals;
 
 @end
 
@@ -248,5 +266,26 @@ For simplicity, we just schedule every single occurence of all notifications dir
     }
     [self endUpdates];
 }
+
+
+/*
+#pragma mark - Breaks
+
+- (NSSet *)breaks {
+    if(self.breakIntervals == nil) self.breakIntervals = [NSMutableSet set];
+    return self.breakIntervals;
+}
+
+- (void)addBreak:(DLNotificationBreakInterval *)breakI {
+    if(self.breakIntervals == nil) self.breakIntervals = [NSMutableSet set];
+    [self.breakIntervals addObject:breakI];
+}
+
+- (void)removeBreak:(DLNotificationBreakInterval *)breakI {
+    if(self.breakIntervals == nil) self.breakIntervals = [NSMutableSet set];
+    [self.breakIntervals removeObject:breakI];
+}
+ */
+
 
 @end

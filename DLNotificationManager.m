@@ -50,7 +50,7 @@ NSArray *scheduledNotifications() {
 - (NSArray *)scheduledNotificationsForId:(NSUUID *)notifId;
 
 // TODO: use this when scheduling local notifications
-@property (strong) NSMutableSet *breakIntervals;
+// @property (strong) NSMutableSet *breakIntervals;
 
 @end
 
@@ -72,21 +72,22 @@ For simplicity, we just schedule every single occurence of all notifications dir
 
 - (id)init {
     if((self = [super init])) {
-        // TODO: decode to DLLocalNotification objects.
-        //       the dictionary written may only contain NSString, NSData, and the other usual property list suspects
-        self.notifications = [NSMutableDictionary dictionaryWithContentsOfURL:notificationsURL()];
-        if(self.notifications == nil) {
-            self.notifications = [NSMutableDictionary dictionary];
-		}
+        NSArray *arr = [NSArray arrayWithContentsOfURL:notificationsURL()];
+        self.notifications = [NSMutableDictionary dictionaryWithCapacity:[arr count]];
+        for (NSDictionary *plist in arr) {
+            DLLocalNotification *notif = [DLLocalNotification fromPlistRepresentation:plist];
+            [self.notifications setObject:notif forKey:notif.notificationId];
+        }
     }
     return self;
 }
 
-// TODO: replace some persist calls by a persistIfNeeded combined with a beginUpdates and endUpdates method,
-//       in order to prevent unnecessary writes
 - (void)persist {
-    // TODO: transcode the notifications to property list format
-    BOOL success = [self.notifications writeToURL:notificationsURL() atomically:YES];
+    NSMutableArray *arr = [NSMutableArray arrayWithCapacity:[self.notifications count]];
+    for(DLLocalNotification *notif in [self.notifications allValues]) {
+        [arr addObject:[notif plistRepresentation]];
+    }
+    BOOL success = [arr writeToURL:notificationsURL() atomically:YES];
     if(! success) {
         NSLog(@"Saving purchases to %@ failed!", notificationsURL());
     }

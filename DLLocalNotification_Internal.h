@@ -17,8 +17,10 @@ extern NSString *LocalNotificationIdKey;
 // If the recurrence ends before `dateOrNil` or the internal fireDate is `nil`, `nil` is returned.
 // If the recurrence is `nil`, there is only one instance, namely the one with the internal fireDate (as long as it is not `nil)
 //
-// if the notification fires at `dateOrNil`, the instance *after* `dateOrNil is returned.
-// TODO: verify that the implementation actually does this
+// if the notification fires exactly at `dateOrNil`, the instance *after* `dateOrNil is returned.
 - (UILocalNotification *)nextInstanceAfter:(NSDate *)dateOrNil;
+
++ (DLLocalNotification *)fromPlistRepresentation:(NSDictionary *)plist;
+- (NSDictionary *)plistRepresentation;
 
 @end

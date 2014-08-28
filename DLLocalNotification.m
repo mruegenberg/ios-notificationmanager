@@ -27,8 +27,9 @@ NSString *LocalNotificationIdKey = @"LNIdentifier";
         NSCalendar *cal = [NSCalendar autoupdatingCurrentCalendar];
         NSDate *next = [cal dateByAddingComponents:dC toDate:date options:0];
         // FIXME: inefficient. can be done much faster by directly computing the right number of days to add
-        //        at least for daily and weekly recurrence
-        while ([next earlierDate:date] == next) {
+        //        at least for the common case of daily and weekly recurrence
+        // keep going until `next` is (strictly) in the future wrt `date`
+        while([date laterDate:next] != next) {
             next = [cal dateByAddingComponents:dC toDate:date options:0];
         }
         next;
@@ -72,14 +73,15 @@ NSString *LocalNotificationIdKey = @"LNIdentifier";
         NSDate *result = nil;
         if(self.fireDate == nil) result = nil;
         else if(dateOrNil == nil) result = self.fireDate;
-        else if([self.fireDate laterDate:dateOrNil] == self.fireDate) result = nil; // next instance start would be in future
         else if(self.recurrenceRule == nil) {
-            if([self.fireDate earlierDate:dateOrNil] != self.fireDate)
-                result = nil;
-            else
+            // if there is no recurrence, we can only return fireDate.
+            // we only return that if it is (strictly) in the future wrt dateOrNil
+            if([dateOrNil laterDate:self.fireDate] == self.fireDate)
                 result = self.fireDate;
+            else
+                result = nil;
         }
-        else
+        else // self.recurrenceRule != nil, self.fireDate != nil, dateOrNil != nil
             result = [self.recurrenceRule nextInstanceAfter:dateOrNil];
         result;
     });
@@ -100,6 +102,36 @@ NSString *LocalNotificationIdKey = @"LNIdentifier";
     });
     
     return localNotif;
+}
+
++ (DLLocalNotification *)fromPlistRepresentation:(NSDictionary *)plist {
+    DLLocalNotification *notif = [DLLocalNotification new];
+    notif.fireDate = [plist objectForKey:@"fireDate"];
+    notif.timeZone = [NSTimeZone timeZoneForSecondsFromGMT:[(NSNumber *)[plist objectForKey:@"timeZone"] integerValue]];
+    notif.alertBody = [plist objectForKey:@"alertBody"];
+    notif.hasAction = [(NSNumber *)[plist objectForKey:@"hasAction"] boolValue];
+    notif.alertAction = [plist objectForKey:@"alertAction"];
+    notif.alertLaunchImage = [plist objectForKey:@"alertLaunchImage"];
+    notif.soundName = [plist objectForKey:@"soundName"];
+    notif.applicationIconBadgeNumber = [(NSNumber *)[plist objectForKey:@"applicationIconBadgeNumber"] unsignedIntegerValue];
+    notif.userInfo = [plist objectForKey:@"userInfo"];
+    notif.notificationId = [[NSUUID alloc] initWithUUIDString:[plist objectForKey:@"uuid"]];
+    return notif;
+}
+
+- (NSDictionary *)plistRepresentation {
+    NSMutableDictionary *result = [NSMutableDictionary dictionaryWithCapacity:10];
+    [result setObject:self.fireDate forKey:@"fireDate"];
+    [result setObject:@([self.timeZone secondsFromGMT]) forKey:@"timeZone"];
+    [result setObject:self.alertBody    forKey:@"alertBody"];
+    [result setObject:@(self.hasAction) forKey:@"hasAction"];
+    [result setObject:self.alertAction  forKey:@"alertAction"];
+    [result setObject:self.alertLaunchImage forKey:@"alertLaunchImage"];
+    [result setObject:self.soundName forKey:@"soundName"];
+    [result setObject:@(self.applicationIconBadgeNumber) forKey:@"applicationIconBadgeNumber"];
+    [result setObject:self.userInfo forKey:@"userInfo"];
+    [result setObject:[self.notificationId UUIDString] forKey:@"uuid"];
+    return result;
 }
 
 @end

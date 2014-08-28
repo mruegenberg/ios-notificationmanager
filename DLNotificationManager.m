@@ -121,6 +121,8 @@ For simplicity, we just schedule every single occurence of all notifications dir
 }
 
 - (void)schedulePendingNotifications {
+    // TODO: much of this can be done in a background thread
+    
     // for simplicity, we first remove all scheduled notifications.
     // this isn't the most efficient way, but there's no point in making things unnecessarily complex
     // for uncertain performance gains.

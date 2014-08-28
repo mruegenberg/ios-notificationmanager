@@ -116,21 +116,46 @@ NSString *LocalNotificationIdKey = @"LNIdentifier";
     notif.applicationIconBadgeNumber = [(NSNumber *)[plist objectForKey:@"applicationIconBadgeNumber"] unsignedIntegerValue];
     notif.userInfo = [plist objectForKey:@"userInfo"];
     notif.notificationId = [[NSUUID alloc] initWithUUIDString:[plist objectForKey:@"uuid"]];
+    DLLocalNotificationRecurrence *recurrence = [DLLocalNotificationRecurrence new];
+    recurrence.recurrenceFrequency = ({
+        switch ([[plist objectForKey:@"recurrenceFrequency"] unsignedIntegerValue]) {
+            case 0: EKRecurrenceFrequencyDaily; break;
+            case 1: EKRecurrenceFrequencyWeekly; break
+            case 2: EKRecurrenceFrequencyMonthly; break;
+            default: EKRecurrenceFrequencyYearly; break; // 3
+        }
+    });
+    recurrence.recurrenceInterval = [plist objectForKey:@"recurrenceInterval"] unsignedIntegerValue];
+    recurrence.recurrenceEnd      = [plist objectForKey:@"recurrenceEnd"];
+    notif.recurrenceRule = recurrence;
     return notif;
 }
 
 - (NSDictionary *)plistRepresentation {
     NSMutableDictionary *result = [NSMutableDictionary dictionaryWithCapacity:10];
-    [result setObject:self.fireDate forKey:@"fireDate"];
-    [result setObject:@([self.timeZone secondsFromGMT]) forKey:@"timeZone"];
-    [result setObject:self.alertBody    forKey:@"alertBody"];
-    [result setObject:@(self.hasAction) forKey:@"hasAction"];
-    [result setObject:self.alertAction  forKey:@"alertAction"];
-    [result setObject:self.alertLaunchImage forKey:@"alertLaunchImage"];
-    [result setObject:self.soundName forKey:@"soundName"];
-    [result setObject:@(self.applicationIconBadgeNumber) forKey:@"applicationIconBadgeNumber"];
-    [result setObject:self.userInfo forKey:@"userInfo"];
-    [result setObject:[self.notificationId UUIDString] forKey:@"uuid"];
+    [result setValue:self.fireDate forKey:@"fireDate"];
+    [result setValue:@([self.timeZone secondsFromGMT]) forKey:@"timeZone"];
+    [result setValue:self.alertBody    forKey:@"alertBody"];
+    [result setValue:@(self.hasAction) forKey:@"hasAction"];
+    [result setValue:self.alertAction  forKey:@"alertAction"];
+    [result setValue:self.alertLaunchImage forKey:@"alertLaunchImage"];
+    [result setValue:self.soundName forKey:@"soundName"];
+    [result setValue:@(self.applicationIconBadgeNumber) forKey:@"applicationIconBadgeNumber"];
+    [result setValue:self.userInfo forKey:@"userInfo"];
+    [result setValue:[self.notificationId UUIDString] forKey:@"uuid"];
+    if(self.recurrenceRule) {
+        NSUInteger freq = ({
+            switch (self.recurrenceRule.recurrenceFrequency) {
+                case EKRecurrenceFrequencyDaily: 0; break;
+                case EKRecurrenceFrequencyWeekly: 1; break;
+                case EKRecurrenceFrequencyMonthly: 2; break;
+                default: 3; break; // EKRecurrenceFrequencyYearly
+            }
+        });
+        [result setValue:@(freq) forKeyPath:@"recurrenceFrequency"];
+        [result setValue:@(self.recurrenceRule.recurrenceInterval) forKeyPath:@"recurrenceInterval"];
+        [result setValue:self.recurrenceRule.recurrenceEnd forKeyPath:@"recurrenceEnd"];
+    }
     return result;
 }
 

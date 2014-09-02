@@ -38,7 +38,7 @@ NSArray *scheduledNotifications() {
 
 @interface DLNotificationManager ()
 
-@property NSMutableDictionary *notifications; 
+@property NSMutableDictionary *notifications;
 - (void)persist; // persist settings
 
 - (void)setNeedsPersistence;
@@ -121,8 +121,6 @@ For simplicity, we just schedule every single occurence of all notifications dir
 }
 
 - (void)schedulePendingNotifications {
-    // TODO: much of this can be done in a background thread (probably everything except the actual scheduling of UILocalNotifications
-    
     // for simplicity, we first remove all scheduled notifications.
     // this isn't the most efficient way, but there's no point in making things unnecessarily complex
     // for uncertain performance gains.
@@ -144,91 +142,101 @@ For simplicity, we just schedule every single occurence of all notifications dir
     //
     // possible optimization: use a priority queue for `afterNextNotifications`
     
-    NSArray *notifications = [self.notifications allValues]; // need to save this since order of `allValues` between calls is not defined (at least theoretically)
-    NSUInteger c = [notifications count];
-    NSMutableArray *nextNotifications      = [NSMutableArray arrayWithCapacity:c];
-    NSMutableArray *afterNextNotifications = [NSMutableArray arrayWithCapacity:c];
-    NSDate *now = [NSDate date];
-   
-    for(DLLocalNotification *notif in notifications)
-        [nextNotifications addObject:[notif nextInstanceAfter:now]];
-    __block NSDate *smallestAfterNext = nil;
-    NSMutableArray *indices = [NSMutableArray arrayWithCapacity:c];
-    for (NSUInteger i = 0; i<c; ++i) {
-        DLLocalNotification *notif        = [notifications objectAtIndex:i];
-        UILocalNotification *nextInstance = [nextNotifications objectAtIndex:i];
-        UILocalNotification *afterNextInstance = [notif nextInstanceAfter:nextInstance.fireDate];
-        [afterNextNotifications addObject:afterNextInstance];
-        if(smallestAfterNext == nil ||
-           [afterNextInstance.fireDate earlierDate:smallestAfterNext] == afterNextInstance.fireDate)
-            smallestAfterNext = afterNextInstance.fireDate;
-        [indices addObject:@(i)];
-    }
-    
-    
-    __block NSUInteger scheduledCount = 0;
-    while(scheduledCount < MAX_USED_NOTIFICATIONS && [nextNotifications count] > 0) {
-        NSMutableIndexSet *notifsToScheduleIdx = [NSMutableIndexSet indexSet];
-        for(NSUInteger i = 0; i<c; ++i) {
+    // all generation of notifications to actually schedule can run in the background
+    // the scheduling itself has to take place in the main thread
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        NSArray *notifications = [self.notifications allValues]; // need to save this since order of `allValues` between calls is not defined (at least theoretically)
+        NSUInteger c = [notifications count];
+        NSMutableArray *nextNotifications      = [NSMutableArray arrayWithCapacity:c];
+        NSMutableArray *afterNextNotifications = [NSMutableArray arrayWithCapacity:c];
+        NSDate *now = [NSDate date];
+        
+        for(DLLocalNotification *notif in notifications)
+            [nextNotifications addObject:[notif nextInstanceAfter:now]];
+        __block NSDate *smallestAfterNext = nil;
+        NSMutableArray *indices = [NSMutableArray arrayWithCapacity:c];
+        for (NSUInteger i = 0; i<c; ++i) {
+            DLLocalNotification *notif        = [notifications objectAtIndex:i];
             UILocalNotification *nextInstance = [nextNotifications objectAtIndex:i];
-            if([nextInstance.fireDate earlierDate:smallestAfterNext] == nextInstance.fireDate) {
-                [notifsToScheduleIdx addIndex:i];
-            }
+            UILocalNotification *afterNextInstance = [notif nextInstanceAfter:nextInstance.fireDate];
+            [afterNextNotifications addObject:afterNextInstance];
+            if(smallestAfterNext == nil ||
+               [afterNextInstance.fireDate earlierDate:smallestAfterNext] == afterNextInstance.fireDate)
+                smallestAfterNext = afterNextInstance.fireDate;
+            [indices addObject:@(i)];
         }
         
-        // remove unneeded indices if necessary
-        if(scheduledCount + [notifsToScheduleIdx count] >= MAX_USED_NOTIFICATIONS){
-            NSMutableArray *notifsToSchedule = [NSMutableArray arrayWithCapacity:[notifsToScheduleIdx count]];
-            [notifsToScheduleIdx enumerateIndexesUsingBlock:^(NSUInteger idx, BOOL *stop) {
-                [notifsToSchedule addObject:@[@(idx),[nextNotifications objectAtIndex:idx]]];
-            }];
-            [notifsToSchedule sortedArrayUsingComparator:^NSComparisonResult(id obj1, id obj2) {
-                NSDate *d1 = ((UILocalNotification *)[obj1 objectAtIndex:1]).fireDate;
-                NSDate *d2 = ((UILocalNotification *)[obj2 objectAtIndex:1]).fireDate;
-                return [d1 compare:d2];
-            }];
-            NSAssert([notifsToSchedule count] == [notifsToScheduleIdx count], @"Something went wrong.");
-            for(NSUInteger i = MAX_USED_NOTIFICATIONS - scheduledCount; i < [notifsToScheduleIdx count]; ++i) {
-                NSUInteger idx = [[[notifsToSchedule objectAtIndex:i] objectAtIndex:0] unsignedIntegerValue];
-                [notifsToScheduleIdx removeIndex:idx];
-            }
-        }
-                 
         
-        [notifsToScheduleIdx enumerateIndexesUsingBlock:^(NSUInteger idx, BOOL *stop) {
-            // schedule the notification
-            UILocalNotification *nextInstance = [nextNotifications objectAtIndex:idx];
-            [[UIApplication sharedApplication] scheduleLocalNotification:nextInstance];
-            scheduledCount++;
+        __block NSUInteger scheduledCount = 0;
+        while(scheduledCount < MAX_USED_NOTIFICATIONS && [nextNotifications count] > 0) {
+            NSMutableIndexSet *notifsToScheduleIdx = [NSMutableIndexSet indexSet];
+            for(NSUInteger i = 0; i<c; ++i) {
+                UILocalNotification *nextInstance = [nextNotifications objectAtIndex:i];
+                if([nextInstance.fireDate earlierDate:smallestAfterNext] == nextInstance.fireDate) {
+                    [notifsToScheduleIdx addIndex:i];
+                }
+            }
             
-            // update the corresponding position in nextNotifications and afterNextNotifications
-            UILocalNotification *afterNextInstance = [afterNextNotifications objectAtIndex:idx];
-            if(smallestAfterNext == afterNextInstance.fireDate)
-                smallestAfterNext = nil;
-            [nextNotifications replaceObjectAtIndex:idx withObject:afterNextInstance];
-            
-            DLLocalNotification *notif = [notifications objectAtIndex:idx];
-            UILocalNotification *newAfterNextInstance = [notif nextInstanceAfter:afterNextInstance.fireDate];
-            [afterNextNotifications replaceObjectAtIndex:idx withObject:newAfterNextInstance];
-        }];
-        
-        // compute new smallestAfterNext:
-        if(smallestAfterNext == nil) {
-            for(UILocalNotification *afterNextInstance in afterNextNotifications) {
-                if(smallestAfterNext == nil ||
-                   [afterNextInstance.fireDate earlierDate:smallestAfterNext] == afterNextInstance.fireDate)
-                    smallestAfterNext = afterNextInstance.fireDate;
+            // remove unneeded indices if necessary
+            if(scheduledCount + [notifsToScheduleIdx count] >= MAX_USED_NOTIFICATIONS){
+                NSMutableArray *notifsToSchedule = [NSMutableArray arrayWithCapacity:[notifsToScheduleIdx count]];
+                [notifsToScheduleIdx enumerateIndexesUsingBlock:^(NSUInteger idx, BOOL *stop) {
+                    [notifsToSchedule addObject:@[@(idx),[nextNotifications objectAtIndex:idx]]];
+                }];
+                [notifsToSchedule sortedArrayUsingComparator:^NSComparisonResult(id obj1, id obj2) {
+                    NSDate *d1 = ((UILocalNotification *)[obj1 objectAtIndex:1]).fireDate;
+                    NSDate *d2 = ((UILocalNotification *)[obj2 objectAtIndex:1]).fireDate;
+                    return [d1 compare:d2];
+                }];
+                NSAssert([notifsToSchedule count] == [notifsToScheduleIdx count], @"Something went wrong.");
+                for(NSUInteger i = MAX_USED_NOTIFICATIONS - scheduledCount; i < [notifsToScheduleIdx count]; ++i) {
+                    NSUInteger idx = [[[notifsToSchedule objectAtIndex:i] objectAtIndex:0] unsignedIntegerValue];
+                    [notifsToScheduleIdx removeIndex:idx];
+                }
             }
-        }
-        else {
+            
+            NSMutableArray *toSchedule = [NSMutableArray arrayWithCapacity:[notifsToScheduleIdx count]];
             [notifsToScheduleIdx enumerateIndexesUsingBlock:^(NSUInteger idx, BOOL *stop) {
+                // schedule the notification
+                UILocalNotification *nextInstance = [nextNotifications objectAtIndex:idx];
+                [toSchedule addObject:nextInstance];
+                scheduledCount++;
+                
+                // update the corresponding position in nextNotifications and afterNextNotifications
                 UILocalNotification *afterNextInstance = [afterNextNotifications objectAtIndex:idx];
-                if(smallestAfterNext == nil ||
-                   [afterNextInstance.fireDate earlierDate:smallestAfterNext] == afterNextInstance.fireDate)
-                    smallestAfterNext = afterNextInstance.fireDate;
+                if(smallestAfterNext == afterNextInstance.fireDate)
+                    smallestAfterNext = nil;
+                [nextNotifications replaceObjectAtIndex:idx withObject:afterNextInstance];
+                
+                DLLocalNotification *notif = [notifications objectAtIndex:idx];
+                UILocalNotification *newAfterNextInstance = [notif nextInstanceAfter:afterNextInstance.fireDate];
+                [afterNextNotifications replaceObjectAtIndex:idx withObject:newAfterNextInstance];
             }];
+            // schedule the notifications on the main thread
+            dispatch_sync(dispatch_get_main_queue(), ^{
+                for(UILocalNotification *nextInstance in toSchedule) {
+                    [[UIApplication sharedApplication] scheduleLocalNotification:nextInstance];
+                }
+            });
+            
+            // compute new smallestAfterNext:
+            if(smallestAfterNext == nil) {
+                for(UILocalNotification *afterNextInstance in afterNextNotifications) {
+                    if(smallestAfterNext == nil ||
+                       [afterNextInstance.fireDate earlierDate:smallestAfterNext] == afterNextInstance.fireDate)
+                        smallestAfterNext = afterNextInstance.fireDate;
+                }
+            }
+            else {
+                [notifsToScheduleIdx enumerateIndexesUsingBlock:^(NSUInteger idx, BOOL *stop) {
+                    UILocalNotification *afterNextInstance = [afterNextNotifications objectAtIndex:idx];
+                    if(smallestAfterNext == nil ||
+                       [afterNextInstance.fireDate earlierDate:smallestAfterNext] == afterNextInstance.fireDate)
+                        smallestAfterNext = afterNextInstance.fireDate;
+                }];
+            }
         }
-    }
+    });
 }
 
 - (void)scheduleLocalNotification:(DLLocalNotification *)notification {

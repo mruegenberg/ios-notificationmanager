@@ -38,7 +38,7 @@ NSArray *scheduledNotifications() {
 
 @interface DLNotificationManager ()
 
-@property NSMutableDictionary *notifications; // TODO: check whether using a dictionary here actually helps much. otherwise use an array
+@property NSMutableDictionary *notifications; 
 - (void)persist; // persist settings
 
 - (void)setNeedsPersistence;
@@ -121,7 +121,7 @@ For simplicity, we just schedule every single occurence of all notifications dir
 }
 
 - (void)schedulePendingNotifications {
-    // TODO: much of this can be done in a background thread
+    // TODO: much of this can be done in a background thread (probably everything except the actual scheduling of UILocalNotifications
     
     // for simplicity, we first remove all scheduled notifications.
     // this isn't the most efficient way, but there's no point in making things unnecessarily complex
@@ -199,7 +199,7 @@ For simplicity, we just schedule every single occurence of all notifications dir
             // schedule the notification
             UILocalNotification *nextInstance = [nextNotifications objectAtIndex:idx];
             [[UIApplication sharedApplication] scheduleLocalNotification:nextInstance];
-            scheduledCount++; // TODO: need to sort the nextNotifs
+            scheduledCount++;
             
             // update the corresponding position in nextNotifications and afterNextNotifications
             UILocalNotification *afterNextInstance = [afterNextNotifications objectAtIndex:idx];

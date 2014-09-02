@@ -10,27 +10,40 @@
 #import "DLLocalNotification_Internal.h"
 
 NSString *LocalNotificationIdKey = @"LNIdentifier";
+#define SECONDS_PER_DAY (60 * 60 * 24)
 
 @implementation DLLocalNotificationRecurrence
 
-- (NSDate *)nextInstanceAfter:(NSDate *)date {
-    // recurrence ends before the date
+- (NSDate *)nextInstanceAfter:(NSDate *)date withStart:(NSDate *)start {
     NSDate *next = ({
+        // add some time to the start date, then (if necessary) iterate until
+        // we are after `date`
+        
         NSDateComponents *dC = [[NSDateComponents alloc] init];
-        switch (self.recurrenceFrequency ) {
-            case EKRecurrenceFrequencyDaily:  dC.day = self.recurrenceInterval; break;
-            case EKRecurrenceFrequencyWeekly: dC.week = self.recurrenceInterval; break;
-            case EKRecurrenceFrequencyMonthly: dC.month = self.recurrenceInterval; break;
-            case EKRecurrenceFrequencyYearly: dC.year = self.recurrenceInterval; break;
-            default: break;
+        BOOL needsIter = NO; // do we need to iterate, or can we directly go to the
+                             // right date?
+        if(self.recurrenceFrequency == EKRecurrenceFrequencyMonthly) {
+            dC.month = self.recurrenceInterval;
+            needsIter = YES;
+        }
+        else if(self.recurrenceFrequency == EKRecurrenceFrequencyYearly) {
+            dC.month = self.recurrenceInterval;
+            needsIter = YES;
+        }
+        else { // weekly or daily
+            needsIter = NO;
+            NSTimeInterval dt = [date timeIntervalSinceDate:start];
+            NSInteger days = self.recurrenceFrequency == EKRecurrenceFrequencyWeekly ? 7 : 1;
+            NSTimeInterval recurrenceInterval = days * SECONDS_PER_DAY;
+            dC.day = ceil(dt / recurrenceInterval);
         }
         NSCalendar *cal = [NSCalendar autoupdatingCurrentCalendar];
-        NSDate *next = [cal dateByAddingComponents:dC toDate:date options:0];
-        // FIXME: inefficient. can be done much faster by directly computing the right number of days to add
-        //        at least for the common case of daily and weekly recurrence
-        // keep going until `next` is (strictly) in the future wrt `date`
-        while([date laterDate:next] != next) {
-            next = [cal dateByAddingComponents:dC toDate:date options:0];
+        NSDate *next = [cal dateByAddingComponents:dC toDate:start options:0];
+        if(needsIter) {
+            // keep going until `next` is (strictly) in the future wrt `date`
+            while([date laterDate:next] != next) {
+                next = [cal dateByAddingComponents:dC toDate:date options:0];
+            }
         }
         next;
     });
@@ -82,7 +95,7 @@ NSString *LocalNotificationIdKey = @"LNIdentifier";
                 result = nil;
         }
         else // self.recurrenceRule != nil, self.fireDate != nil, dateOrNil != nil
-            result = [self.recurrenceRule nextInstanceAfter:dateOrNil];
+            result = [self.recurrenceRule nextInstanceAfter:dateOrNil withStart:self.fireDate];
         result;
     });
     if(fireDate == nil) return nil;
@@ -118,14 +131,16 @@ NSString *LocalNotificationIdKey = @"LNIdentifier";
     notif.notificationId = [[NSUUID alloc] initWithUUIDString:[plist objectForKey:@"uuid"]];
     DLLocalNotificationRecurrence *recurrence = [DLLocalNotificationRecurrence new];
     recurrence.recurrenceFrequency = ({
+        EKRecurrenceFrequency result;
         switch ([[plist objectForKey:@"recurrenceFrequency"] unsignedIntegerValue]) {
-            case 0: EKRecurrenceFrequencyDaily; break;
-            case 1: EKRecurrenceFrequencyWeekly; break
-            case 2: EKRecurrenceFrequencyMonthly; break;
-            default: EKRecurrenceFrequencyYearly; break; // 3
+            case 0:  result = EKRecurrenceFrequencyDaily; break;
+            case 1:  result = EKRecurrenceFrequencyWeekly; break;
+            case 2:  result = EKRecurrenceFrequencyMonthly; break;
+            default: result = EKRecurrenceFrequencyYearly; break; // 3
         }
+        result;
     });
-    recurrence.recurrenceInterval = [plist objectForKey:@"recurrenceInterval"] unsignedIntegerValue];
+    recurrence.recurrenceInterval = [[plist objectForKey:@"recurrenceInterval"] unsignedIntegerValue];
     recurrence.recurrenceEnd      = [plist objectForKey:@"recurrenceEnd"];
     notif.recurrenceRule = recurrence;
     return notif;
@@ -145,12 +160,14 @@ NSString *LocalNotificationIdKey = @"LNIdentifier";
     [result setValue:[self.notificationId UUIDString] forKey:@"uuid"];
     if(self.recurrenceRule) {
         NSUInteger freq = ({
+            NSUInteger result;
             switch (self.recurrenceRule.recurrenceFrequency) {
-                case EKRecurrenceFrequencyDaily: 0; break;
-                case EKRecurrenceFrequencyWeekly: 1; break;
-                case EKRecurrenceFrequencyMonthly: 2; break;
-                default: 3; break; // EKRecurrenceFrequencyYearly
+                case EKRecurrenceFrequencyDaily:         result = 0; break;
+                case EKRecurrenceFrequencyWeekly:        result = 1; break;
+                case EKRecurrenceFrequencyMonthly:       result = 2; break;
+                default: /*EKRecurrenceFrequencyYearly*/ result = 3; break;
             }
+            result;
         });
         [result setValue:@(freq) forKeyPath:@"recurrenceFrequency"];
         [result setValue:@(self.recurrenceRule.recurrenceInterval) forKeyPath:@"recurrenceInterval"];

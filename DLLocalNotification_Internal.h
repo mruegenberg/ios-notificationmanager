@@ -4,7 +4,7 @@ extern NSString *LocalNotificationIdKey;
 
 @interface DLLocalNotificationRecurrence ()
 
-- (NSDate *)nextInstanceAfter:(NSDate *)date;
+- (NSDate *)nextInstanceAfter:(NSDate *)date withStart:(NSDate *)start;
 
 @end
 

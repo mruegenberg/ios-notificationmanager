@@ -16,7 +16,7 @@ Pod::Spec.new do |s|
 
   s.source_files = '*.{h,m}'
 
-  s.public_header_files = 'DLNotification.h', 'DLNotificationManager.h'
+  s.public_header_files = 'DLLocalNotification.h', 'DLNotificationManager.h'
 
   s.frameworks  = 'CoreFoundation', 'EventKit', 'UIKit'
 end

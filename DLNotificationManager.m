@@ -151,19 +151,34 @@ For simplicity, we just schedule every single occurence of all notifications dir
         NSMutableArray *afterNextNotifications = [NSMutableArray arrayWithCapacity:c];
         NSDate *now = [NSDate date];
         
-        for(DLLocalNotification *notif in notifications)
-            [nextNotifications addObject:[notif nextInstanceAfter:now]];
+        // remove those notifications that won't fire anymore
+        NSMutableArray *notificationsToRemove = [NSMutableArray arrayWithCapacity:1];
+        for(DLLocalNotification *notif in notifications) {
+            UILocalNotification *nextInstance = [notif nextInstanceAfter:now];
+            if(nextInstance == nil)
+                [notificationsToRemove addObject:notif];
+            else
+                [nextNotifications addObject:nextInstance];
+        }
+        if([notificationsToRemove count] != 0) {
+            for(DLLocalNotification *notif in notificationsToRemove) {
+                [self.notifications removeObjectForKey:notif.notificationId];
+            }
+            notifications = [self.notifications allValues];
+        }
+        
+        // obtain the first date of the set of notifications after the next one
         __block NSDate *smallestAfterNext = nil;
-        NSMutableArray *indices = [NSMutableArray arrayWithCapacity:c];
         for (NSUInteger i = 0; i<c; ++i) {
             DLLocalNotification *notif        = [notifications objectAtIndex:i];
             UILocalNotification *nextInstance = [nextNotifications objectAtIndex:i];
             UILocalNotification *afterNextInstance = [notif nextInstanceAfter:nextInstance.fireDate];
-            [afterNextNotifications addObject:afterNextInstance];
-            if(smallestAfterNext == nil ||
-               [afterNextInstance.fireDate earlierDate:smallestAfterNext] == afterNextInstance.fireDate)
-                smallestAfterNext = afterNextInstance.fireDate;
-            [indices addObject:@(i)];
+            if(afterNextInstance != nil) {
+                [afterNextNotifications addObject:afterNextInstance];
+                if(smallestAfterNext == nil ||
+                   [afterNextInstance.fireDate earlierDate:smallestAfterNext] == afterNextInstance.fireDate)
+                    smallestAfterNext = afterNextInstance.fireDate;
+            }
         }
         
         
@@ -276,6 +291,20 @@ For simplicity, we just schedule every single occurence of all notifications dir
         [self cancelLocalNotification:notif];
     }
     [self endUpdates];
+}
+
+- (NSArray *)scheduledNotifications {
+    return [self.notifications allValues];
+}
+
+// a local notification fired.
+// - fill up its place in the queue
+// - if this was the last instance, remove the corresponding local notification from this manager
+- (BOOL)receivedLocalNotification:(UILocalNotification *)notification {
+    if(! [notification.userInfo objectForKey:LocalNotificationIdKey]) // notification not scheduled with a manager
+        return NO;
+    NSLog(@"received local");
+    return YES;
 }
 
 

@@ -16,6 +16,10 @@
 @property NSUInteger recurrenceInterval;
 @property NSDate *recurrenceEnd;
 
++ (DLLocalNotificationRecurrence *)recurrenceRuleWithFrequency:(EKRecurrenceFrequency)freq
+                                                      interval:(NSUInteger)interval
+                                                       endDate:(NSDate *)end;
+
 @end
 
 

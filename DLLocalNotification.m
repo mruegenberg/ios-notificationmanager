@@ -52,6 +52,33 @@ NSString *LocalNotificationIdKey = @"LNIdentifier";
     return next;
 }
 
++ (DLLocalNotificationRecurrence *)recurrenceRuleWithFrequency:(EKRecurrenceFrequency)freq
+                                                      interval:(NSUInteger)interval
+                                                       endDate:(NSDate *)end {
+    DLLocalNotificationRecurrence *r = [DLLocalNotificationRecurrence new];
+    r.recurrenceFrequency = freq;
+    r.recurrenceInterval = interval;
+    r.recurrenceEnd = end;
+    return r;
+}
+
+- (NSString *)description {
+    NSString *endStr = @"";
+    if(self.recurrenceEnd != nil) {
+        NSDateFormatter *dF = [NSDateFormatter new];
+        dF.dateStyle = NSDateFormatterMediumStyle;
+        dF.timeStyle = NSDateFormatterMediumStyle;
+        endStr = [NSString stringWithFormat:@" until %@", [dF stringFromDate:self.recurrenceEnd]];
+    }
+    NSString *freqStr = @"";
+    if(self.recurrenceFrequency == EKRecurrenceFrequencyDaily) freqStr = @"days";
+    else if(self.recurrenceFrequency == EKRecurrenceFrequencyWeekly) freqStr = @"weeks";
+    else if(self.recurrenceFrequency == EKRecurrenceFrequencyMonthly) freqStr = @"months";
+    else if(self.recurrenceFrequency == EKRecurrenceFrequencyYearly) freqStr = @"years";
+    
+    return [NSString stringWithFormat:@"Repeat every %d %@%@", self.recurrenceInterval, freqStr, endStr];
+}
+
 @end
 
 
@@ -144,6 +171,13 @@ NSString *LocalNotificationIdKey = @"LNIdentifier";
     recurrence.recurrenceEnd      = [plist objectForKey:@"recurrenceEnd"];
     notif.recurrenceRule = recurrence;
     return notif;
+}
+
+- (NSUUID *)notificationId {
+    if(_notificationId == nil) {
+        _notificationId = [NSUUID UUID];
+    }
+    return _notificationId;
 }
 
 - (NSDictionary *)plistRepresentation {

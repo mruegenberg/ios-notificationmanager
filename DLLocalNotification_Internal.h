@@ -10,7 +10,7 @@ extern NSString *LocalNotificationIdKey;
 
 @interface DLLocalNotification ()
 
-@property (strong) NSUUID *notificationId;
+@property (nonatomic, strong) NSUUID *notificationId;
 
 // generate a local notification corresponding to this notification with a fireDate after `dateOrNil`.
 // If `dateOrNil == nil`, the internal fireDate is assumed.

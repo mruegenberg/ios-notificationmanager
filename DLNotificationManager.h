@@ -26,6 +26,10 @@
 - (void)cancelAllLocalNotifications;
 
 - (void)schedulePendingNotifications; // updates the local notifications actually scheduled
+- (NSArray *)scheduledNotifications;
+
+// handle a local notification. returns `NO`, if the notification was not scheduled using a manager
+- (BOOL)receivedLocalNotification:(UILocalNotification *)notification;
 
 // TODO: support for periods without notifications (aka holidays):
 /*

@@ -257,6 +257,7 @@ For simplicity, we just schedule every single occurence of all notifications dir
 - (void)scheduleLocalNotification:(DLLocalNotification *)notification {
     [self.notifications setObject:notification forKey:notification.notificationId];
     [self schedulePendingNotifications];
+    [self setNeedsPersistence];
 }
 
 - (void)presentLocalNotificationNow:(DLLocalNotification *)notification {

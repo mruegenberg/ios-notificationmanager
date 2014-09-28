@@ -8,7 +8,6 @@
 
 #import <UIKit/UIKit.h>
 #import "DateField.h"
-#import <EventKit/EKRecurrenceRule.h>
 #import "DLLocalNotification.h"
 
 @interface NotificationEditController : UIViewController
@@ -19,7 +18,7 @@
 @property (nonatomic, strong) IBOutlet UITextField *recIntervalLabel;
 @property (nonatomic, strong) IBOutlet UITextField *badgeLabel;
 
-@property (nonatomic) EKRecurrenceFrequency recurrenceFreq;
+@property (nonatomic) DLNotificationRecurrenceFrequency recurrenceFreq;
 
 @property (nonatomic, strong) DLLocalNotification *notification;
 

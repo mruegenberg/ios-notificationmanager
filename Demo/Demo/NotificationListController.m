@@ -28,12 +28,6 @@
     self.navigationItem.leftBarButtonItem = self.editButtonItem;
 }
 
-- (void)didReceiveMemoryWarning
-{
-    [super didReceiveMemoryWarning];
-    // Dispose of any resources that can be recreated.
-}
-
 #pragma mark - Table View
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
@@ -67,7 +61,7 @@
     
     recurrenceLabel.text = [NSString stringWithFormat:@"%@", notif.recurrenceRule];
     
-    badgeLabel.text = [NSString stringWithFormat:@"%d", notif.applicationIconBadgeNumber];
+    badgeLabel.text = [NSString stringWithFormat:@"%lu", (unsigned long)notif.applicationIconBadgeNumber];
     
     
     return cell;

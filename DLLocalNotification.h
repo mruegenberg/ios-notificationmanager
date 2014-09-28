@@ -7,16 +7,23 @@
 //
 
 #import <Foundation/Foundation.h>
-#import <EventKit/EKRecurrenceRule.h>
 #import <UIKit/UIKit.h>
+
+// modelled on EKRecurrenceFrequency
+typedef enum {
+    DLRecurrenceFrequencyDaily,
+    DLRecurrenceFrequencyWeekly,
+    DLRecurrenceFrequencyMonthly,
+    DLRecurrenceFrequencyYearly
+} DLNotificationRecurrenceFrequency;
 
 @interface DLLocalNotificationRecurrence : NSObject
 
-@property EKRecurrenceFrequency recurrenceFrequency;
+@property DLNotificationRecurrenceFrequency recurrenceFrequency;
 @property NSUInteger recurrenceInterval;
 @property NSDate *recurrenceEnd;
 
-+ (DLLocalNotificationRecurrence *)recurrenceRuleWithFrequency:(EKRecurrenceFrequency)freq
++ (DLLocalNotificationRecurrence *)recurrenceRuleWithFrequency:(DLNotificationRecurrenceFrequency)freq
                                                       interval:(NSUInteger)interval
                                                        endDate:(NSDate *)end;
 

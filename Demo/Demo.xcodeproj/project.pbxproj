@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		1C83165B19D82EC7001400A3 /* MainViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1C83165A19D82EC7001400A3 /* MainViewController.m */; };
 		1CBF841A19BCB91900D231E6 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1CBF841919BCB91900D231E6 /* Foundation.framework */; };
 		1CBF841C19BCB91900D231E6 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1CBF841B19BCB91900D231E6 /* CoreGraphics.framework */; };
 		1CBF841E19BCB91900D231E6 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1CBF841D19BCB91900D231E6 /* UIKit.framework */; };
@@ -20,9 +21,12 @@
 		1CBF846219BCDEE000D231E6 /* NotificationEditController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1CBF846119BCDEE000D231E6 /* NotificationEditController.m */; };
 		1CBF846B19BDD1A200D231E6 /* DLLocalNotification.m in Sources */ = {isa = PBXBuildFile; fileRef = 1CBF846819BDD1A200D231E6 /* DLLocalNotification.m */; };
 		1CBF846C19BDD1A200D231E6 /* DLNotificationManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 1CBF846A19BDD1A200D231E6 /* DLNotificationManager.m */; };
+		1CDD136D19D83299008917F5 /* LocalNotificationListController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1CDD136C19D83299008917F5 /* LocalNotificationListController.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		1C83165919D82EC7001400A3 /* MainViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MainViewController.h; sourceTree = "<group>"; };
+		1C83165A19D82EC7001400A3 /* MainViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MainViewController.m; sourceTree = "<group>"; };
 		1CBF841619BCB91900D231E6 /* Demo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Demo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		1CBF841919BCB91900D231E6 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		1CBF841B19BCB91900D231E6 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
@@ -47,6 +51,8 @@
 		1CBF846819BDD1A200D231E6 /* DLLocalNotification.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = DLLocalNotification.m; path = ../../DLLocalNotification.m; sourceTree = "<group>"; };
 		1CBF846919BDD1A200D231E6 /* DLNotificationManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DLNotificationManager.h; path = ../../DLNotificationManager.h; sourceTree = "<group>"; };
 		1CBF846A19BDD1A200D231E6 /* DLNotificationManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = DLNotificationManager.m; path = ../../DLNotificationManager.m; sourceTree = "<group>"; };
+		1CDD136B19D83299008917F5 /* LocalNotificationListController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LocalNotificationListController.h; sourceTree = "<group>"; };
+		1CDD136C19D83299008917F5 /* LocalNotificationListController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LocalNotificationListController.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -66,6 +72,8 @@
 		1CBF840D19BCB91900D231E6 = {
 			isa = PBXGroup;
 			children = (
+				1CDD136B19D83299008917F5 /* LocalNotificationListController.h */,
+				1CDD136C19D83299008917F5 /* LocalNotificationListController.m */,
 				1CBF841F19BCB91900D231E6 /* Demo */,
 				1CBF841819BCB91900D231E6 /* Frameworks */,
 				1CBF841719BCB91900D231E6 /* Products */,
@@ -99,6 +107,8 @@
 				1CBF845E19BCC44300D231E6 /* Main.storyboard */,
 				1CBF842E19BCB91900D231E6 /* NotificationListController.h */,
 				1CBF842F19BCB91900D231E6 /* NotificationListController.m */,
+				1C83165919D82EC7001400A3 /* MainViewController.h */,
+				1C83165A19D82EC7001400A3 /* MainViewController.m */,
 				1CBF845B19BCC00E00D231E6 /* DateField.h */,
 				1CBF845C19BCC00E00D231E6 /* DateField.m */,
 				1CBF846019BCDEE000D231E6 /* NotificationEditController.h */,
@@ -192,10 +202,12 @@
 				1CBF846B19BDD1A200D231E6 /* DLLocalNotification.m in Sources */,
 				1CBF845D19BCC00E00D231E6 /* DateField.m in Sources */,
 				1CBF846C19BDD1A200D231E6 /* DLNotificationManager.m in Sources */,
+				1C83165B19D82EC7001400A3 /* MainViewController.m in Sources */,
 				1CBF842A19BCB91900D231E6 /* AppDelegate.m in Sources */,
 				1CBF843019BCB91900D231E6 /* NotificationListController.m in Sources */,
 				1CBF842619BCB91900D231E6 /* main.m in Sources */,
 				1CBF846219BCDEE000D231E6 /* NotificationEditController.m in Sources */,
+				1CDD136D19D83299008917F5 /* LocalNotificationListController.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -330,6 +342,7 @@
 				1CBF844D19BCB91A00D231E6 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};

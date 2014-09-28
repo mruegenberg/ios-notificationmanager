@@ -22,18 +22,18 @@ NSString *LocalNotificationIdKey = @"LNIdentifier";
         NSDateComponents *dC = [[NSDateComponents alloc] init];
         BOOL needsIter = NO; // do we need to iterate, or can we directly go to the
                              // right date?
-        if(self.recurrenceFrequency == EKRecurrenceFrequencyMonthly) {
+        if(self.recurrenceFrequency == DLRecurrenceFrequencyMonthly) {
             dC.month = self.recurrenceInterval;
             needsIter = YES;
         }
-        else if(self.recurrenceFrequency == EKRecurrenceFrequencyYearly) {
+        else if(self.recurrenceFrequency == DLRecurrenceFrequencyYearly) {
             dC.month = self.recurrenceInterval;
             needsIter = YES;
         }
         else { // weekly or daily
             needsIter = NO;
             NSTimeInterval dt = [date timeIntervalSinceDate:start];
-            NSInteger days = self.recurrenceFrequency == EKRecurrenceFrequencyWeekly ? 7 : 1;
+            NSInteger days = self.recurrenceFrequency == DLRecurrenceFrequencyWeekly ? 7 : 1;
             NSTimeInterval recurrenceInterval = days * SECONDS_PER_DAY;
             dC.day = ceil(dt / recurrenceInterval);
         }
@@ -52,7 +52,7 @@ NSString *LocalNotificationIdKey = @"LNIdentifier";
     return next;
 }
 
-+ (DLLocalNotificationRecurrence *)recurrenceRuleWithFrequency:(EKRecurrenceFrequency)freq
++ (DLLocalNotificationRecurrence *)recurrenceRuleWithFrequency:(DLNotificationRecurrenceFrequency)freq
                                                       interval:(NSUInteger)interval
                                                        endDate:(NSDate *)end {
     DLLocalNotificationRecurrence *r = [DLLocalNotificationRecurrence new];
@@ -71,12 +71,12 @@ NSString *LocalNotificationIdKey = @"LNIdentifier";
         endStr = [NSString stringWithFormat:@" until %@", [dF stringFromDate:self.recurrenceEnd]];
     }
     NSString *freqStr = @"";
-    if(self.recurrenceFrequency == EKRecurrenceFrequencyDaily) freqStr = @"days";
-    else if(self.recurrenceFrequency == EKRecurrenceFrequencyWeekly) freqStr = @"weeks";
-    else if(self.recurrenceFrequency == EKRecurrenceFrequencyMonthly) freqStr = @"months";
-    else if(self.recurrenceFrequency == EKRecurrenceFrequencyYearly) freqStr = @"years";
+    if     (self.recurrenceFrequency == DLRecurrenceFrequencyDaily)   freqStr = @"days";
+    else if(self.recurrenceFrequency == DLRecurrenceFrequencyWeekly)  freqStr = @"weeks";
+    else if(self.recurrenceFrequency == DLRecurrenceFrequencyMonthly) freqStr = @"months";
+    else if(self.recurrenceFrequency == DLRecurrenceFrequencyYearly)  freqStr = @"years";
     
-    return [NSString stringWithFormat:@"Repeat every %d %@%@", self.recurrenceInterval, freqStr, endStr];
+    return [NSString stringWithFormat:@"Repeat every %lu %@%@", (unsigned long)self.recurrenceInterval, freqStr, endStr];
 }
 
 @end
@@ -158,12 +158,12 @@ NSString *LocalNotificationIdKey = @"LNIdentifier";
     notif.notificationId = [[NSUUID alloc] initWithUUIDString:[plist objectForKey:@"uuid"]];
     DLLocalNotificationRecurrence *recurrence = [DLLocalNotificationRecurrence new];
     recurrence.recurrenceFrequency = ({
-        EKRecurrenceFrequency result;
+        DLNotificationRecurrenceFrequency result;
         switch ([[plist objectForKey:@"recurrenceFrequency"] unsignedIntegerValue]) {
-            case 0:  result = EKRecurrenceFrequencyDaily; break;
-            case 1:  result = EKRecurrenceFrequencyWeekly; break;
-            case 2:  result = EKRecurrenceFrequencyMonthly; break;
-            default: result = EKRecurrenceFrequencyYearly; break; // 3
+            case 0:  result = DLRecurrenceFrequencyDaily; break;
+            case 1:  result = DLRecurrenceFrequencyWeekly; break;
+            case 2:  result = DLRecurrenceFrequencyMonthly; break;
+            default: result = DLRecurrenceFrequencyYearly; break; // 3
         }
         result;
     });
@@ -196,10 +196,10 @@ NSString *LocalNotificationIdKey = @"LNIdentifier";
         NSUInteger freq = ({
             NSUInteger result;
             switch (self.recurrenceRule.recurrenceFrequency) {
-                case EKRecurrenceFrequencyDaily:         result = 0; break;
-                case EKRecurrenceFrequencyWeekly:        result = 1; break;
-                case EKRecurrenceFrequencyMonthly:       result = 2; break;
-                default: /*EKRecurrenceFrequencyYearly*/ result = 3; break;
+                case DLRecurrenceFrequencyDaily:         result = 0; break;
+                case DLRecurrenceFrequencyWeekly:        result = 1; break;
+                case DLRecurrenceFrequencyMonthly:       result = 2; break;
+                default: /*DLRecurrenceFrequencyYearly*/ result = 3; break;
             }
             result;
         });
